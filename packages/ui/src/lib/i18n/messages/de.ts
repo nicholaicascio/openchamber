@@ -2415,6 +2415,8 @@ export const dict = {
   'chat.modelControls.default': 'Standard',
   'chat.modelControls.selectAgent': 'Agent auswählen',
   'chat.modelControls.costPerMillion': 'Kosten ($/1M Tokens)',
+  'chat.modelControls.monthlyUsage': 'Monatliche Nutzung',
+  'chat.modelControls.monthlyUsageUnlimited': 'Unbegrenzt',
   'chat.modelControls.metadataUnavailable': 'Modell-Metadaten nicht verfügbar.',
   'chat.modelControls.addNewProvider': 'Neuen Anbieter hinzufügen',
   'chat.modelControls.noAgentSelected': 'Kein Agent ausgewählt.',

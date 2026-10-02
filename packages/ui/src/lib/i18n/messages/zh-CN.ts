@@ -2593,6 +2593,8 @@ export const dict: Record<I18nKey, string> = {
   'chat.modelControls.default': '默认',
   'chat.modelControls.selectAgent': '选择智能体',
   'chat.modelControls.costPerMillion': '成本（$/100万 tokens）',
+  'chat.modelControls.monthlyUsage': '月度用量',
+  'chat.modelControls.monthlyUsageUnlimited': '无限制',
   'chat.modelControls.metadataUnavailable': '模型元数据不可用。',
   'chat.modelControls.addNewProvider': '添加新提供商',
   'chat.modelControls.noAgentSelected': '未选择智能体。',

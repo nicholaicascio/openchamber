@@ -20,6 +20,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { handleDropdownNavigationKey } from '@/components/ui/dropdown-navigation';
 import { getCurrentIntlLocale } from '@/lib/i18n';
 import { mergeModelMetadataWithLiveModel } from '@/lib/modelMetadata';
+import { formatGoMonthlyUsage, getGoMonthlyUsage, type GoMonthlyUsage } from '@/lib/quota/goMonthlyLimits';
 import { getModelDisplayName as getSharedModelDisplayName } from '@/lib/modelDisplay';
 import { cn } from '@/lib/utils';
 import { useConfigStore } from '@/stores/useConfigStore';
@@ -95,10 +96,11 @@ const hasTooltipMetadata = (metadata?: ModelMetadata) => {
 
 const ModelPickerRowTooltip: React.FC<{
   metadata?: ModelMetadata;
+  monthlyUsage?: GoMonthlyUsage;
   active: boolean;
   labels: ModelPickerListProps['labels'];
   children: React.ReactElement;
-}> = ({ metadata, active, labels, children }) => {
+}> = ({ metadata, monthlyUsage, active, labels, children }) => {
   const [delayedActive, setDelayedActive] = React.useState(false);
 
   React.useEffect(() => {
@@ -111,6 +113,10 @@ const ModelPickerRowTooltip: React.FC<{
   }, [active]);
 
   if (!hasTooltipMetadata(metadata)) return children;
+
+  const monthlyUsageText = monthlyUsage === 'unlimited'
+    ? labels.monthlyUsageUnlimited
+    : monthlyUsage ? formatGoMonthlyUsage(monthlyUsage) : undefined;
 
   const inputModalities = metadata?.modalities?.input ?? [];
   const outputModalities = metadata?.modalities?.output ?? [];
@@ -147,6 +153,12 @@ const ModelPickerRowTooltip: React.FC<{
               <div className="flex items-center justify-between gap-3 text-muted-foreground">
                 <span className="typography-meta font-medium">{labels.costPerMillion}</span>
                 <span className="typography-meta text-foreground">In {formatCost(metadata?.cost?.input)} · Out {formatCost(metadata?.cost?.output)}</span>
+              </div>
+            ) : null}
+            {labels.monthlyUsage && monthlyUsageText ? (
+              <div className="flex items-center justify-between gap-3 text-muted-foreground">
+                <span className="typography-meta font-medium">{labels.monthlyUsage}</span>
+                <span className="typography-meta text-foreground">{monthlyUsageText}</span>
               </div>
             ) : null}
           </div>
@@ -451,6 +463,9 @@ interface ModelPickerListProps {
     input?: string;
     output?: string;
     costPerMillion?: string;
+    /** Row label for a Go model's plan allowance; pair with `monthlyUsageUnlimited`. */
+    monthlyUsage?: string;
+    monthlyUsageUnlimited?: string;
   };
   selectedModel?: { providerID: string; modelID: string } | null;
   /**
@@ -883,6 +898,7 @@ export const ModelPickerList: React.FC<ModelPickerListProps> = ({
 
   const renderRow = (entry: ModelPickerEntry, keyPrefix: string, showProviderLogo: boolean, rowIndex: number, dragHandleProps?: SortableFavoriteHandleProps | null) => {
     const metadata = mergeModelMetadataWithLiveModel(entry.providerID, entry.model, getModelMetadata(entry.providerID, entry.modelID));
+    const monthlyUsage = getGoMonthlyUsage(entry.providerID, entry.modelID);
     const contextTokens = formatModelContextTokens(metadata?.limit?.context);
     const count = selectionCount?.(entry) ?? 0;
     const isSelected = selectedModel?.providerID === entry.providerID && selectedModel.modelID === entry.modelID;
@@ -939,7 +955,7 @@ export const ModelPickerList: React.FC<ModelPickerListProps> = ({
             </div>
           );
 
-          return <ModelPickerRowTooltip metadata={metadata} active={tooltipsEnabled && isHighlighted} labels={labels}>{rowElement}</ModelPickerRowTooltip>;
+          return <ModelPickerRowTooltip metadata={metadata} monthlyUsage={monthlyUsage} active={tooltipsEnabled && isHighlighted} labels={labels}>{rowElement}</ModelPickerRowTooltip>;
         }}
       </ModelPickerRowHighlight>
     );

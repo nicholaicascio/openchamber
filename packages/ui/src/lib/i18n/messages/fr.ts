@@ -2313,6 +2313,8 @@ export const dict = {
   'chat.modelControls.default': 'Défaut',
   'chat.modelControls.selectAgent': 'Sélectionnez un agent',
   'chat.modelControls.costPerMillion': 'Coût ($/1 million de jetons)',
+  'chat.modelControls.monthlyUsage': 'Usage mensuel',
+  'chat.modelControls.monthlyUsageUnlimited': 'Illimité',
   'chat.modelControls.metadataUnavailable': 'Métadonnées du modèle indisponibles.',
   'chat.modelControls.addNewProvider': 'Ajouter un nouveau fournisseur',
   'chat.modelControls.noAgentSelected': 'Aucun agent sélectionné.',

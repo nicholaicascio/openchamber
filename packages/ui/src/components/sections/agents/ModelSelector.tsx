@@ -119,6 +119,8 @@ export const ModelSelector: React.FC<ModelSelectorProps> = ({
         input: t('chat.modelControls.input'),
         output: t('chat.modelControls.output'),
         costPerMillion: t('chat.modelControls.costPerMillion'),
+        monthlyUsage: t('chat.modelControls.monthlyUsage'),
+        monthlyUsageUnlimited: t('chat.modelControls.monthlyUsageUnlimited'),
     }), [placeholder, t]);
 
     const selectedModel = providerId && modelId ? { providerID: providerId, modelID: modelId } : null;

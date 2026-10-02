@@ -2556,6 +2556,8 @@ export const dict = {
   'chat.modelControls.default': 'Varsayılan',
   'chat.modelControls.selectAgent': 'Agent seç',
   'chat.modelControls.costPerMillion': 'Maliyet ($/1M token)',
+  'chat.modelControls.monthlyUsage': 'Aylık kullanım',
+  'chat.modelControls.monthlyUsageUnlimited': 'Sınırsız',
   'chat.modelControls.metadataUnavailable': 'Model meta verileri kullanılamıyor.',
   'chat.modelControls.addNewProvider': 'Yeni provider ekle',
   'chat.modelControls.noAgentSelected': 'Agent seçilmedi.',

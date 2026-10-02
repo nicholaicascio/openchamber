@@ -253,6 +253,8 @@ export const ModelMultiSelect: React.FC<ModelMultiSelectProps> = ({
     input: t('chat.modelControls.input'),
     output: t('chat.modelControls.output'),
     costPerMillion: t('chat.modelControls.costPerMillion'),
+    monthlyUsage: t('chat.modelControls.monthlyUsage'),
+    monthlyUsageUnlimited: t('chat.modelControls.monthlyUsageUnlimited'),
   }), [t]);
 
   return (

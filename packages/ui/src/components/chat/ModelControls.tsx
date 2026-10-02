@@ -28,6 +28,7 @@ import { isDesktopShell } from '@/lib/desktop';
 import { useAgentColors } from '@/hooks/useAgentColors';
 import { useDeviceInfo } from '@/lib/device';
 import { mergeModelMetadataWithLiveModel } from '@/lib/modelMetadata';
+import { formatGoMonthlyUsage, getGoMonthlyUsage } from '@/lib/quota/goMonthlyLimits';
 import { getModelDisplayName as getSharedModelDisplayName } from '@/lib/modelDisplay';
 import { getEditModeColors } from '@/lib/permissions/editModeColors';
 import { cn } from '@/lib/utils';
@@ -691,6 +692,10 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
         { label: 'Cache read', value: formatCost(currentMetadata?.cost?.cache_read) },
         { label: 'Cache write', value: formatCost(currentMetadata?.cost?.cache_write) },
     ];
+
+    // The Go plan allowance behind a Go model, shown only for the
+    // opencode-go provider and only while the lineup is known.
+    const goMonthlyUsage = getGoMonthlyUsage(currentProviderId, currentModelId);
 
     const limitRows = [
         { label: 'Context', value: formatTokens(currentMetadata?.limit?.context) },
@@ -2316,6 +2321,16 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
                             </div>
                         ))}
                     </div>
+                    {goMonthlyUsage ? (
+                        <div className="flex flex-col gap-1.5">
+                            <span className="typography-meta font-semibold uppercase tracking-wide text-muted-foreground/90">{t('chat.modelControls.monthlyUsage')}</span>
+                            <span className="typography-meta font-medium text-foreground">
+                                {goMonthlyUsage === 'unlimited'
+                                    ? t('chat.modelControls.monthlyUsageUnlimited')
+                                    : formatGoMonthlyUsage(goMonthlyUsage)}
+                            </span>
+                        </div>
+                    ) : null}
                     <div className="flex flex-col gap-1.5">
                         <span className="typography-meta font-semibold uppercase tracking-wide text-muted-foreground/90">{t('chat.modelControls.limits')}</span>
                         {limitRows.map((row) => (
@@ -2442,6 +2457,8 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
             input: t('chat.modelControls.input'),
             output: t('chat.modelControls.output'),
             costPerMillion: t('chat.modelControls.costPerMillion'),
+            monthlyUsage: t('chat.modelControls.monthlyUsage'),
+            monthlyUsageUnlimited: t('chat.modelControls.monthlyUsageUnlimited'),
         };
 
         const renderThinkingSlot = (entry: ModelPickerEntry, { isHighlighted, isSelected }: { isHighlighted: boolean; isSelected: boolean }) => {

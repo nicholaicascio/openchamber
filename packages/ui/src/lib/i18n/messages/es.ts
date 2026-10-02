@@ -2593,6 +2593,8 @@ export const dict: Record<I18nKey, string> = {
   "chat.modelControls.default": "Predeterminado",
   "chat.modelControls.selectAgent": "Seleccionar agente",
   "chat.modelControls.costPerMillion": "Costo ($/1M tokens)",
+  "chat.modelControls.monthlyUsage": "Uso mensual",
+  "chat.modelControls.monthlyUsageUnlimited": "Ilimitado",
   "chat.modelControls.metadataUnavailable": "Metadatos del modelo no disponibles.",
   "chat.modelControls.addNewProvider": "Añadir nuevo proveedor",
   "chat.modelControls.noAgentSelected": "No se seleccionó ningún agente.",

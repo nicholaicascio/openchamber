@@ -2626,6 +2626,8 @@ export const dict: Record<I18nKey, string> = {
   'chat.modelControls.default': 'デフォルト',
   'chat.modelControls.selectAgent': 'エージェントを選択',
   'chat.modelControls.costPerMillion': 'コスト（$/100万トークン）',
+  'chat.modelControls.monthlyUsage': '月間使用量',
+  'chat.modelControls.monthlyUsageUnlimited': '無制限',
   'chat.modelControls.metadataUnavailable': 'モデルのメタデータは利用できません。',
   'chat.modelControls.addNewProvider': '新しいプロバイダーを追加',
   'chat.modelControls.noAgentSelected': 'エージェントが選択されていません。',

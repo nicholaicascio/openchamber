@@ -2595,6 +2595,8 @@ export const dict: Record<I18nKey, string> = {
   'chat.modelControls.default': '預設',
   'chat.modelControls.selectAgent': '選擇 Agent',
   'chat.modelControls.costPerMillion': '成本（$/百萬 tokens）',
+  'chat.modelControls.monthlyUsage': '月度用量',
+  'chat.modelControls.monthlyUsageUnlimited': '無限制',
   'chat.modelControls.metadataUnavailable': '模型元資料無法使用。',
   'chat.modelControls.addNewProvider': '新增供應商',
   'chat.modelControls.noAgentSelected': '未選擇 Agent。',

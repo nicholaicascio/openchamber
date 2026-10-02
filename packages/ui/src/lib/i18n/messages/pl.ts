@@ -1354,6 +1354,8 @@ export const dict: Record<I18nKey, string> = {
   'chat.modelControls.collapseProvider': 'Zwiń dostawcę',
   'chat.modelControls.context': 'Kontekst',
   'chat.modelControls.costPerMillion': 'Koszt ($/1 mln tokenów)',
+  'chat.modelControls.monthlyUsage': 'Miesięczne użycie',
+  'chat.modelControls.monthlyUsageUnlimited': 'Nieograniczone',
   'chat.modelControls.current': 'Bieżący',
   'chat.modelControls.customPrompt': 'Niestandardowy prompt',
   'chat.modelControls.default': 'Domyślny',
