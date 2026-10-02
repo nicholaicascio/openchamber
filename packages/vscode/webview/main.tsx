@@ -1095,6 +1095,18 @@ const handleLocalApiRequest = async (input: RequestInfo | URL, url: URL, init: R
     }
   }
 
+  if (pathname.startsWith('/api/openchamber/go-monthly-usage')) {
+    try {
+      const data = await sendBridgeMessage('api:go/monthly-usage');
+      return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    } catch (error) {
+      console.warn('[OpenChamber] Failed to fetch Go monthly usage via bridge:', error);
+      // A non-OK answer keeps the bundled table; an empty one would read as
+      // "no model has an allowance".
+      return new Response(JSON.stringify({ error: 'Failed to retrieve Go monthly usage limits' }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+    }
+  }
+
   if (pathname === '/api/opencode/version' && method === 'GET') {
     try {
       const data = await sendBridgeMessage('api:opencode/version');

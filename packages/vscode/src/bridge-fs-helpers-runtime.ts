@@ -3,6 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { execGit } from './bridge-git-process-runtime';
+import { getGoMonthlyUsageTable } from '../../web/server/lib/quota/go-monthly-usage.js';
 
 const MAX_FILE_ATTACH_SIZE_BYTES = 20 * 1024 * 1024;
 
@@ -494,6 +495,11 @@ export const searchDirectory = async (
   }
 
   return searchFilesystemFiles(rootPath, sanitizedQuery, limit, includeHidden, respectGitignore, 1500);
+};
+
+export const fetchGoMonthlyUsage = async () => {
+  const { models } = await getGoMonthlyUsageTable();
+  return { models };
 };
 
 export const fetchModelsMetadata = async () => {

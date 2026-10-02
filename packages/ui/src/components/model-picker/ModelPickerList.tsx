@@ -20,7 +20,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { handleDropdownNavigationKey } from '@/components/ui/dropdown-navigation';
 import { getCurrentIntlLocale } from '@/lib/i18n';
 import { mergeModelMetadataWithLiveModel } from '@/lib/modelMetadata';
-import { formatGoMonthlyUsage, getGoMonthlyUsage, type GoMonthlyUsage } from '@/lib/quota/goMonthlyLimits';
+import { formatGoMonthlyUsage, selectGoMonthlyUsage, type GoMonthlyUsage } from '@/lib/quota/goMonthlyLimits';
+import { useGoMonthlyUsageTable } from '@/stores/useGoMonthlyUsage';
 import { getModelDisplayName as getSharedModelDisplayName } from '@/lib/modelDisplay';
 import { cn } from '@/lib/utils';
 import { useConfigStore } from '@/stores/useConfigStore';
@@ -563,6 +564,7 @@ export const ModelPickerList: React.FC<ModelPickerListProps> = ({
   const getModelMetadata = useConfigStore((state) => state.getModelMetadata);
   useConfigStore((state) => state.modelsMetadata);
   useConfigStore((state) => state.providers);
+  const goMonthlyUsageTable = useGoMonthlyUsageTable();
   const selectionStoreRef = React.useRef<IndexSelectionStore | null>(null);
   if (!selectionStoreRef.current) selectionStoreRef.current = createIndexSelectionStore();
   const selectionStore = selectionStoreRef.current;
@@ -898,7 +900,7 @@ export const ModelPickerList: React.FC<ModelPickerListProps> = ({
 
   const renderRow = (entry: ModelPickerEntry, keyPrefix: string, showProviderLogo: boolean, rowIndex: number, dragHandleProps?: SortableFavoriteHandleProps | null) => {
     const metadata = mergeModelMetadataWithLiveModel(entry.providerID, entry.model, getModelMetadata(entry.providerID, entry.modelID));
-    const monthlyUsage = getGoMonthlyUsage(entry.providerID, entry.modelID);
+    const monthlyUsage = selectGoMonthlyUsage(goMonthlyUsageTable, entry.providerID, entry.modelID);
     const contextTokens = formatModelContextTokens(metadata?.limit?.context);
     const count = selectionCount?.(entry) ?? 0;
     const isSelected = selectedModel?.providerID === entry.providerID && selectedModel.modelID === entry.modelID;

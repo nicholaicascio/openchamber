@@ -28,7 +28,8 @@ import { isDesktopShell } from '@/lib/desktop';
 import { useAgentColors } from '@/hooks/useAgentColors';
 import { useDeviceInfo } from '@/lib/device';
 import { mergeModelMetadataWithLiveModel } from '@/lib/modelMetadata';
-import { formatGoMonthlyUsage, getGoMonthlyUsage } from '@/lib/quota/goMonthlyLimits';
+import { formatGoMonthlyUsage, selectGoMonthlyUsage } from '@/lib/quota/goMonthlyLimits';
+import { useGoMonthlyUsageTable } from '@/stores/useGoMonthlyUsage';
 import { getModelDisplayName as getSharedModelDisplayName } from '@/lib/modelDisplay';
 import { getEditModeColors } from '@/lib/permissions/editModeColors';
 import { cn } from '@/lib/utils';
@@ -363,6 +364,7 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
     const getModelMetadata = useConfigStore((state) => state.getModelMetadata);
     const getCurrentAgent = useConfigStore((state) => state.getCurrentAgent);
     const getVisibleAgents = useConfigStore((state) => state.getVisibleAgents);
+    const goMonthlyUsageTable = useGoMonthlyUsageTable();
 
     // Use visible agents (excludes hidden internal agents)
     const agents = getVisibleAgents();
@@ -694,8 +696,8 @@ export const ModelControls: React.FC<ModelControlsProps> = ({
     ];
 
     // The Go plan allowance behind a Go model, shown only for the
-    // opencode-go provider and only while the lineup is known.
-    const goMonthlyUsage = getGoMonthlyUsage(currentProviderId, currentModelId);
+    // opencode-go provider and only while a table lists the model.
+    const goMonthlyUsage = selectGoMonthlyUsage(goMonthlyUsageTable, currentProviderId, currentModelId);
 
     const limitRows = [
         { label: 'Context', value: formatTokens(currentMetadata?.limit?.context) },

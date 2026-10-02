@@ -1,26 +1,31 @@
 import { describe, expect, test } from 'bun:test';
 
-import { formatGoMonthlyUsage, getGoMonthlyUsage } from './goMonthlyLimits';
+import { formatGoMonthlyUsage, selectGoMonthlyUsage, type GoMonthlyUsage } from './goMonthlyLimits';
 
-describe('getGoMonthlyUsage', () => {
-  test('returns the plan pair for a listed Go model', () => {
-    expect(getGoMonthlyUsage('opencode-go', 'kimi-k3')).toEqual({ go: 15, goPlus: 60 });
-    expect(getGoMonthlyUsage('opencode-go', 'mimo-v2.6-flash')).toEqual({ go: 60, goPlus: 120 });
+describe('selectGoMonthlyUsage', () => {
+  test('answers from the bundled table before a live table has loaded', () => {
+    expect(selectGoMonthlyUsage(null, 'opencode-go', 'kimi-k3')).toEqual({ go: 15, goPlus: 60 });
+    expect(selectGoMonthlyUsage(null, 'opencode-go', 'space-bunny-free')).toBe('unlimited');
   });
 
-  test('reports the limited-time free models as unlimited', () => {
-    expect(getGoMonthlyUsage('opencode-go', 'space-bunny-free')).toBe('unlimited');
-    expect(getGoMonthlyUsage('opencode-go', 'longcat-2.5-preview-free')).toBe('unlimited');
+  test('prefers the refreshed table once it has loaded', () => {
+    const live = { 'kimi-k3': { go: 20, goPlus: 80 } } satisfies Record<string, GoMonthlyUsage>;
+    expect(selectGoMonthlyUsage(live, 'opencode-go', 'kimi-k3')).toEqual({ go: 20, goPlus: 80 });
   });
 
-  test('returns undefined for a model outside the published lineup', () => {
-    expect(getGoMonthlyUsage('opencode-go', 'gpt-5.2')).toBeUndefined();
+  test('hides a model the loaded table omits, even if the bundle lists it', () => {
+    // The refreshed table is authoritative: a model it does not list has no
+    // allowance to show, however stale the bundled copy is.
+    expect(selectGoMonthlyUsage({}, 'opencode-go', 'kimi-k3')).toBeUndefined();
   });
 
   test('stays off other providers', () => {
-    // The allowance belongs to the Go plan; another provider's model with the
-    // same id must not borrow it.
-    expect(getGoMonthlyUsage('anthropic', 'kimi-k3')).toBeUndefined();
+    expect(selectGoMonthlyUsage(null, 'anthropic', 'kimi-k3')).toBeUndefined();
+    expect(selectGoMonthlyUsage({ 'kimi-k3': { go: 20, goPlus: 80 } }, 'openai', 'kimi-k3')).toBeUndefined();
+  });
+
+  test('shows nothing for a model no table lists', () => {
+    expect(selectGoMonthlyUsage(null, 'opencode-go', 'gpt-5.2')).toBeUndefined();
   });
 });
 

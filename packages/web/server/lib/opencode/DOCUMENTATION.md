@@ -821,6 +821,12 @@ newer release as installation success. Poll requests have individual deadlines
 within a ten-minute overall deadline.
 
 - `registerOpenChamberRoutes(app, dependencies)`: registers OpenChamber endpoints:
+  - `GET /api/openchamber/go-monthly-usage`
+    - Serves the OpenCode Go per-model monthly allowances parsed from
+      `https://opencode.ai/docs/go.md`, cached for 24 hours (see
+      `packages/web/server/lib/quota/go-monthly-usage.js`). The shared UI keeps
+      a bundled copy and prefers this answer once it loads; a non-OK response
+      leaves the bundled table in place.
   - `GET /api/openchamber/update-check`
   - `POST /api/openchamber/update-install`
     - Desktop-managed hosts delegate authenticated Web update requests to the Electron main process, which checks, downloads, and applies the update through `electron-updater` before restarting the host.

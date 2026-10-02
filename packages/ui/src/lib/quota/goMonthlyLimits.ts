@@ -1,18 +1,21 @@
 import { getCurrentIntlLocale } from '@/lib/i18n';
 
 /**
- * Monthly usage allowances for OpenCode Go models, in whole USD, for the
- * Go ($10/month) and Go Plus ($40/month) plans.
+ * Bundled monthly usage allowances for OpenCode Go models, in whole USD, for
+ * the Go ($10/month) and Go Plus ($40/month) plans.
  *
  * Source: https://opencode.ai/docs/go/#usage-limits (both plan tabs), checked
- * 2026-10-01. Token prices are identical on both plans — only the monthly
- * allowance differs — so the pair is everything a tooltip needs to say how
- * much of a model each plan includes.
+ * 2026-10-01. No OpenCode or Go API publishes this: `/v1/models` lists ids,
+ * `/v1/usage` answers account percentages, and the model catalog has token
+ * prices but no allowance. The map below is the offline answer, and the
+ * server refreshes it from `docs/go.md` daily (see
+ * `packages/web/server/lib/quota/go-monthly-usage.js`); `selectGoMonthlyUsage`
+ * prefers the refreshed table once it has loaded.
  *
  * Keyed by the model id the `opencode-go` provider serves
  * (`opencode-go/<model-id>`). The source table splits some models by context
  * tier or peak/off-peak hours; those rows share one allowance and collapse
- * onto the base id here. A model absent from this map has no known
+ * onto the base id here. A model absent from both tables has no known
  * allowance, and callers hide the row rather than guess: the lineup changes
  * as models are added and retired.
  */
@@ -54,16 +57,23 @@ const GO_MONTHLY_USAGE = new Map<string, GoMonthlyUsage>(Object.entries({
 } satisfies Record<string, GoMonthlyUsage>));
 
 /**
- * The pair for a model of the `opencode-go` provider, or `undefined` when the
- * provider is not OpenCode Go or the model's allowance is unknown — callers
- * hide the tooltip row in that case.
+ * The allowance to show for a model, or `undefined` when nothing should be
+ * shown (a non-Go provider, or a model no table lists).
+ *
+ * `live` is the refreshed table from the docs; while it has not loaded
+ * (`null`) the bundled copy answers. Once loaded, the live table is
+ * authoritative — including for a model it omits, which is how a retired
+ * allowance stops being shown.
  */
-export const getGoMonthlyUsage = (
+export const selectGoMonthlyUsage = (
+  live: Record<string, GoMonthlyUsage> | null,
   providerId: string,
   modelId: string,
-): GoMonthlyUsage | undefined => (
-  providerId === OPENCODE_GO_PROVIDER_ID ? GO_MONTHLY_USAGE.get(modelId) : undefined
-);
+): GoMonthlyUsage | undefined => {
+  if (providerId !== OPENCODE_GO_PROVIDER_ID) return undefined;
+  if (live) return live[modelId];
+  return GO_MONTHLY_USAGE.get(modelId);
+};
 
 /**
  * `Go $15 · Go Plus $60`. Plan names are product names and stay literal;

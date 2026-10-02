@@ -17,6 +17,7 @@ import { resolveWorkspaceFolders } from './workspaceResolver';
 import { reconstructOriginalContentFromPatch } from './patchReconstruction';
 import type { BridgeContext, BridgeResponse } from './bridge';
 import { ENTERPRISE_MODE_ERROR, isEnterpriseMode, publicEnterprisePolicy } from '../../web/server/lib/enterprise-mode.js';
+import type { GoMonthlyUsage } from '../../web/server/lib/quota/go-monthly-usage.js';
 
 const isSessionNotFound = (error: Error): boolean => error.name === 'SessionNotFoundError';
 
@@ -50,6 +51,7 @@ type SystemRuntimeDeps = {
   resolveUserPath: (value: string, baseDirectory: string) => string;
   sessionState: SessionStateStore;
   fetchModelsMetadata: () => Promise<unknown>;
+  fetchGoMonthlyUsage: () => Promise<{ models: Record<string, GoMonthlyUsage> }>;
   updateCheckUrl: string;
   clientReloadDelayMs: number;
 };
@@ -193,6 +195,16 @@ export async function handleSystemBridgeMessage(
     case 'api:models/metadata': {
       try {
         const data = await deps.fetchModelsMetadata();
+        return { id, type, success: true, data };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return { id, type, success: false, error: errorMessage };
+      }
+    }
+
+    case 'api:go/monthly-usage': {
+      try {
+        const data = await deps.fetchGoMonthlyUsage();
         return { id, type, success: true, data };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);

@@ -28,6 +28,7 @@ import {
   searchDirectory,
   resolveFileReadPath,
   fetchModelsMetadata,
+  fetchGoMonthlyUsage,
 } from './bridge-fs-helpers-runtime';
 import {
   tryHandleLocalFsProxy,
@@ -136,6 +137,7 @@ export async function handleBridgeMessage(message: BridgeRequest, ctx?: BridgeCo
         resolveUserPath,
         sessionState: sessionStateStore,
         fetchModelsMetadata,
+        fetchGoMonthlyUsage,
         updateCheckUrl: UPDATE_CHECK_URL,
         clientReloadDelayMs: CLIENT_RELOAD_DELAY_MS,
       },

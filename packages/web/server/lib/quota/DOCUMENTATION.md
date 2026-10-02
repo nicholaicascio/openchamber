@@ -14,7 +14,23 @@ extension applies the same policy in its own process at activation.
 - `packages/web/server/lib/quota/providers/index.js`: provider registry, configured-provider list, and provider dispatcher.
 - `packages/web/server/lib/quota/providers/google/`: Google-specific auth, API, and transform modules.
 - `packages/web/server/lib/quota/providers/claude/`: Claude credential discovery, usage transforms, and rate-limit handling.
+- `packages/web/server/lib/quota/go-monthly-usage.js`: OpenCode Go's per-model monthly allowances, parsed from the public `https://opencode.ai/docs/go.md` and cached for a day. Shared with the VS Code extension host.
 - `packages/web/server/lib/quota/utils/`: shared auth, transform, and formatting helpers.
+
+## OpenCode Go monthly allowances
+
+No OpenCode or Go API publishes the per-model monthly allowances: `/v1/models`
+lists ids only, `/v1/usage` answers account-wide percentages, and the model
+catalog carries token prices but no allowance. The docs page is the only
+published source, so `go-monthly-usage.js` fetches it as markdown (stable
+tables, unlike the rendered HTML), joins the two plan tables with the
+`Model → Model ID` table, and caches the result for 24 hours. Stale-while-
+revalidate: an expired cache is refreshed on the next request, a failed or
+implausible parse (fewer than ten models, or no model-id table) keeps the last
+good table, and only a first-ever failure throws. The shared UI keeps a bundled
+copy of the same table (`packages/ui/src/lib/quota/goMonthlyLimits.ts`) and
+prefers the live one once it loads; VS Code fetches through the same module in
+its extension host.
 
 ## Supported provider IDs (dispatcher)
 

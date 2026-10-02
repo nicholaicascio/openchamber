@@ -478,6 +478,19 @@ export const registerOpenChamberRoutes = (app, dependencies) => {
     }
   });
 
+  app.get('/api/openchamber/go-monthly-usage', async (_req, res) => {
+    try {
+      const { getGoMonthlyUsageTable } = await import('../quota/go-monthly-usage.js');
+      const { models, fromCache, stale } = await getGoMonthlyUsageTable();
+      res.setHeader('Cache-Control', fromCache && !stale ? 'public, max-age=300' : 'public, max-age=3600');
+      res.json({ models });
+    } catch (error) {
+      console.warn('Failed to fetch OpenCode Go monthly usage limits:', error);
+      const statusCode = error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 504 : 502;
+      res.status(statusCode).json({ error: 'Failed to retrieve Go monthly usage limits' });
+    }
+  });
+
   app.get('/api/zen/models', async (_req, res) => {
     try {
       const models = await fetchFreeZenModels();
