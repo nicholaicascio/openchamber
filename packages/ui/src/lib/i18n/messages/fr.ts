@@ -809,6 +809,7 @@ export const dict = {
   'gitView.header.repositoryViews': 'Vues du dépôt',
   'gitView.header.updateBranch': 'Mettre à jour la branche',
   'gitView.header.openPullRequest': 'Ouvrir la pull request',
+  'gitView.header.openRepository': 'Voir le dépôt sur GitHub',
   'gitView.header.removeRemoteAria': 'Supprimer le remote',
   'gitView.header.removeRemoteTitle': 'Supprimer le remote',
   'gitView.header.upstreamSynced': 'synchronisé',

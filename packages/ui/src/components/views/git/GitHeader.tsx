@@ -32,6 +32,8 @@ import { changeRequestCopy } from '@/lib/source-control/changeRequestCopy';
 import { formatChangeRequestReference } from '@/lib/source-control/identity';
 import type { SourceControlProvider } from '@/lib/source-control/types';
 import { prVisualStateOf } from '@/lib/source-control/prVisualState';
+import { gitHubRepositoryUrlFromRemotes } from '@/lib/source-control/repositoryUrl';
+import { openExternalUrl } from '@/lib/url';
 
 type SyncAction = 'fetch' | 'pull' | 'sync' | 'publish' | null;
 
@@ -362,9 +364,16 @@ export const GitHeader: React.FC<GitHeaderProps> = ({
 
   const repositoryOptionsForPicker = (repositoryOptions ?? []).filter(Boolean);
 
+  // The repository's own URL when it is on github.com, so the menu can offer
+  // to open it in the browser; null keeps that entry disabled.
+  const repositoryUrl = gitHubRepositoryUrlFromRemotes(remotes);
+  const hasRepositoryViewItems = Boolean(
+    onOpenHistory || onOpenGraph || onOpenStashes || onOpenUpdateBranch
+  );
+
   const managementButtons = (
     <div className="flex items-center gap-1 shrink-0">
-      {onOpenHistory || onOpenGraph || onOpenStashes || onOpenUpdateBranch ? (
+      {hasRepositoryViewItems || repositoryUrl ? (
         <DropdownMenu>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -412,6 +421,16 @@ export const GitHeader: React.FC<GitHeaderProps> = ({
                 {t('gitView.integrate.title')}
               </DropdownMenuItem>
             ) : null}
+            {hasRepositoryViewItems ? <DropdownMenuSeparator /> : null}
+            <DropdownMenuItem
+              disabled={!repositoryUrl}
+              onSelect={() => {
+                if (repositoryUrl) void openExternalUrl(repositoryUrl);
+              }}
+            >
+              <Icon name="github" className="size-4" />
+              {t('gitView.header.openRepository')}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : null}
