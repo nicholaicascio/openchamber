@@ -32,7 +32,9 @@ import { changeRequestCopy } from '@/lib/source-control/changeRequestCopy';
 import { formatChangeRequestReference } from '@/lib/source-control/identity';
 import type { SourceControlProvider } from '@/lib/source-control/types';
 import { prVisualStateOf } from '@/lib/source-control/prVisualState';
-import { gitHubRepositoryUrlFromRemotes } from '@/lib/source-control/repositoryUrl';
+import { repositoryLinkFromRemotes } from '@/lib/source-control/repositoryUrl';
+import { getSourceControlProviderLabel } from '@/lib/source-control/identity';
+import { useSourceControlAuthStore } from '@/stores/useSourceControlAuthStore';
 import { openExternalUrl } from '@/lib/url';
 
 type SyncAction = 'fetch' | 'pull' | 'sync' | 'publish' | null;
@@ -358,22 +360,21 @@ export const GitHeader: React.FC<GitHeaderProps> = ({
 }) => {
   const { t } = useI18n();
   const { isMobile } = useDeviceInfo();
+  const knownIdentities = useSourceControlAuthStore((state) => state.identities);
   if (!status) {
     return null;
   }
 
   const repositoryOptionsForPicker = (repositoryOptions ?? []).filter(Boolean);
 
-  // The repository's own URL when it is on github.com, so the menu can offer
-  // to open it in the browser; null keeps that entry disabled.
-  const repositoryUrl = gitHubRepositoryUrlFromRemotes(remotes);
+  const repositoryLink = repositoryLinkFromRemotes(remotes, knownIdentities);
   const hasRepositoryViewItems = Boolean(
-    onOpenHistory || onOpenGraph || onOpenStashes || onOpenUpdateBranch
+    onOpenHistory || onOpenGraph || onOpenStashes || onOpenUpdateBranch || onOpenReintegrateCommits
   );
 
   const managementButtons = (
     <div className="flex items-center gap-1 shrink-0">
-      {hasRepositoryViewItems || repositoryUrl ? (
+      {hasRepositoryViewItems || repositoryLink ? (
         <DropdownMenu>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -421,16 +422,15 @@ export const GitHeader: React.FC<GitHeaderProps> = ({
                 {t('gitView.integrate.title')}
               </DropdownMenuItem>
             ) : null}
-            {hasRepositoryViewItems ? <DropdownMenuSeparator /> : null}
-            <DropdownMenuItem
-              disabled={!repositoryUrl}
-              onSelect={() => {
-                if (repositoryUrl) void openExternalUrl(repositoryUrl);
-              }}
-            >
-              <Icon name="github" className="size-4" />
-              {t('gitView.header.openRepository')}
-            </DropdownMenuItem>
+            {repositoryLink ? (
+              <>
+                {hasRepositoryViewItems ? <DropdownMenuSeparator /> : null}
+                <DropdownMenuItem onSelect={() => { void openExternalUrl(repositoryLink.url); }}>
+                  <Icon name={repositoryLink.provider === 'gitlab' ? 'gitlab' : 'github'} className="size-4" />
+                  {t('gitView.header.openRepository', { provider: getSourceControlProviderLabel(repositoryLink.provider) })}
+                </DropdownMenuItem>
+              </>
+            ) : null}
           </DropdownMenuContent>
         </DropdownMenu>
       ) : null}

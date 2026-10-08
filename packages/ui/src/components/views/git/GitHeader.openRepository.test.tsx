@@ -7,7 +7,7 @@ const status: GitStatus = { current: 'main', tracking: null, ahead: 0, behind: 0
 
 const remote = (name: string, fetchUrl: string, pushUrl = fetchUrl): GitRemote => ({ name, fetchUrl, pushUrl });
 
-test('the repository menu opens a GitHub repository and disables the entry elsewhere', async () => {
+test('the repository menu opens provider links and hides the entry elsewhere', async () => {
   const dom = new Window({ url: 'http://localhost' });
   const originals = new Map<string, PropertyDescriptor | undefined>();
   for (const [name, value] of Object.entries({
@@ -32,6 +32,8 @@ test('the repository menu opens a GitHub repository and disables the entry elsew
   const { createRoot } = await import('react-dom/client');
   const { I18nProvider } = await import('@/lib/i18n');
   const { GitHeader } = await import('./GitHeader');
+  const { useSourceControlAuthStore } = await import('@/stores/useSourceControlAuthStore');
+  const originalIdentities = useSourceControlAuthStore.getState().identities;
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
@@ -67,19 +69,19 @@ test('the repository menu opens a GitHub repository and disables the entry elsew
     </I18nProvider>
   ));
 
-  const openRepositoryItem = async (): Promise<HTMLElement> => {
+  const openMenu = async () => {
     const trigger = container.querySelector<HTMLButtonElement>('button[aria-label="Repository views"]');
     if (!trigger) throw new Error('Missing repository views trigger');
     await act(async () => { trigger.click(); });
-    const item = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')]
-      .find((entry) => entry.textContent === 'View repository on GitHub');
-    if (!item) throw new Error('Missing repository menu item');
-    return item;
   };
+  const repositoryItem = (provider: string) => [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+    .find((entry) => entry.textContent === `View repository on ${provider}`);
 
   try {
     await render([remote('origin', 'git@github.com:me/project.git')]);
-    const item = await openRepositoryItem();
+    await openMenu();
+    const item = repositoryItem('GitHub');
+    if (!item) throw new Error('Missing GitHub entry');
     expect(item.getAttribute('aria-disabled')).toBeNull();
     await act(async () => { item.click(); });
     expect(opened).toEqual(['https://github.com/me/project']);
@@ -87,12 +89,29 @@ test('the repository menu opens a GitHub repository and disables the entry elsew
 
     opened.length = 0;
     await render([remote('origin', 'git@gitlab.com:me/project.git')]);
-    const disabledItem = await openRepositoryItem();
-    expect(disabledItem.getAttribute('aria-disabled')).toBe('true');
-    await act(async () => { disabledItem.click(); });
-    expect(opened).toEqual([]);
+    await openMenu();
+    const gitlabItem = repositoryItem('GitLab');
+    if (!gitlabItem) throw new Error('Missing GitLab entry');
+    expect(repositoryItem('GitHub')).toBeUndefined();
+    await act(async () => { gitlabItem.click(); });
+    expect(opened).toEqual(['https://gitlab.com/me/project']);
+
+    await render([remote('origin', 'git@code.example.com:group/sub/project.git')]);
+    await act(async () => useSourceControlAuthStore.setState({ identities: [{ provider: 'gitlab', instance: 'https://code.example.com' }] }));
+    await openMenu();
+    const selfHostedItem = repositoryItem('GitLab');
+    if (!selfHostedItem) throw new Error('Missing self-hosted GitLab entry');
+    await act(async () => { selfHostedItem.click(); });
+    expect(opened.at(-1)).toBe('https://code.example.com/group/sub/project');
+
+    await render([remote('origin', 'https://example.com/team/project.git')]);
+    await openMenu();
+    expect(repositoryItem('GitHub')).toBeUndefined();
+    expect(repositoryItem('GitLab')).toBeUndefined();
+    expect(document.querySelector('[role="separator"]')).toBeNull();
   } finally {
     await act(async () => root.unmount());
+    useSourceControlAuthStore.setState({ identities: originalIdentities });
     for (const [name, descriptor] of originals) {
       if (descriptor) Object.defineProperty(globalThis, name, descriptor);
       else Reflect.deleteProperty(globalThis, name);

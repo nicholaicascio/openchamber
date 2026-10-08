@@ -1,56 +1,52 @@
-import type { GitRemote } from '@/lib/api/types';
-import { gitRemoteHost } from './identity';
+import type { GitRemote, SourceControlIdentity, SourceControlProvider } from '@/lib/api/types';
+import { getSourceControlBaseUrl, resolveSourceControlIdentity } from './identity';
 
-const GITHUB_HOST = 'github.com';
+type RepositoryLink = { provider: SourceControlProvider; url: string };
 
-/**
- * The owner/repo path a git remote points at, for `https://host/owner/repo.git`
- * and for the scp-like `git@host:owner/repo.git` alike.
- */
-const remotePath = (remoteUrl: string): string | null => {
-  const value = remoteUrl.trim();
-  if (!value) return null;
+const repositoryLink = (endpoint: string, identities: readonly SourceControlIdentity[]): RepositoryLink | null => {
+  const value = endpoint.trim();
+  const identity = resolveSourceControlIdentity({ name: '', fetchUrl: value, pushUrl: value }, [...identities]);
+  if (!identity) return null;
 
-  const scpLike = /^[^/@]+@[^/:]+:(.+)$/.exec(value);
-  if (scpLike) return scpLike[1];
-
-  try {
-    return new URL(value).pathname.replace(/^\/+/, '');
-  } catch {
-    return null;
+  let path: string;
+  const scp = /^(?:[^@/:\s]+@)?[^/:\s]+:([^\s]+)$/.exec(value);
+  if (scp && !value.includes('://')) {
+    path = scp[1];
+  } else {
+    try {
+      const remote = new URL(value);
+      if (!['https:', 'http:', 'ssh:', 'git:'].includes(remote.protocol)) return null;
+      path = remote.pathname;
+    } catch {
+      return null;
+    }
   }
+
+  path = path.replace(/^\/+|\/+$/g, '').replace(/\.git$/i, '');
+  const base = new URL(getSourceControlBaseUrl(identity));
+  if (!['https:', 'http:'].includes(base.protocol) || base.username || base.password) return null;
+  const prefix = base.pathname.replace(/^\/+|\/+$/g, '');
+  if (prefix && path.startsWith(`${prefix}/`)) path = path.slice(prefix.length + 1);
+  const segments = path.split('/');
+  if (segments.length < 2 || (identity.provider === 'github' && segments.length !== 2)) return null;
+  if (segments.some((segment) => !/^[a-zA-Z0-9_.-]+$/.test(segment) || ['.', '..', '-'].includes(segment))) return null;
+
+  base.pathname = `/${prefix ? `${prefix}/` : ''}${path}`;
+  base.search = '';
+  base.hash = '';
+  return { provider: identity.provider, url: base.toString() };
 };
 
-/**
- * The browser URL for a GitHub remote, or null when the remote is not
- * `https://github.com/owner/repo` or `git@github.com:owner/repo`. Only
- * github.com is recognised: a GitLab or self-hosted GitHub Enterprise remote
- * has no canonical browser URL OpenChamber can assume.
- */
-export const gitHubRepositoryUrl = (remoteUrl: string): string | null => {
-  const value = remoteUrl.trim();
-  if (!value || gitRemoteHost(value) !== GITHUB_HOST) return null;
-
-  const path = remotePath(value);
-  if (!path) return null;
-
-  const segments = path.replace(/\.git$/i, '').replace(/\/+$/, '').split('/');
-  if (segments.length !== 2 || !segments[0] || !segments[1]) return null;
-
-  return `https://${GITHUB_HOST}/${segments[0]}/${segments[1]}`;
-};
-
-/**
- * The GitHub browser URL for a repository: `origin` first, then the first
- * remote that is on github.com. Each remote's fetch URL answers before its
- * push URL, because a fork's fetch is the repository and its push is where the
- * person happens to be allowed to write.
- */
-export const gitHubRepositoryUrlFromRemotes = (remotes: readonly GitRemote[]): string | null => {
-  const ordered = [...remotes].sort((a, b) => (a.name === 'origin' ? -1 : b.name === 'origin' ? 1 : 0));
+/** Origin first, then the first recognized remote. Fetch identifies the checkout before push. */
+export const repositoryLinkFromRemotes = (
+  remotes: readonly GitRemote[],
+  identities: readonly SourceControlIdentity[],
+): RepositoryLink | null => {
+  const origin = remotes.find((remote) => remote.name === 'origin');
+  const ordered = origin ? [origin, ...remotes.filter((remote) => remote !== origin)] : remotes;
   for (const remote of ordered) {
-    const url = gitHubRepositoryUrl(remote.fetchUrl) ?? gitHubRepositoryUrl(remote.pushUrl);
-    if (url) return url;
+    const link = repositoryLink(remote.fetchUrl, identities) ?? repositoryLink(remote.pushUrl, identities);
+    if (link) return link;
   }
   return null;
 };
